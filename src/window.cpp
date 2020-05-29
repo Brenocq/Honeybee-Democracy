@@ -101,6 +101,10 @@ void Window::start()
 		glfwMakeContextCurrent(_plotWindow);
 		glClearColor(1.0, 1.0, 1.0, 1.0);
 		glClear(GL_COLOR_BUFFER_BIT);
+		
+		// Call draw function
+		if(plot != nullptr)
+			plot();
 
 		glfwSwapBuffers(_plotWindow);
 	}

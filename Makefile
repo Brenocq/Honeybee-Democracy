@@ -12,7 +12,7 @@ LIB    = lib/
 OBJ    = obj/
 
 # Files
-FILES = utils main window stbImage scoutBee environment hive
+FILES = utils main window stbImage scoutBee environment hive nestBox
 
 SOURCES=$(patsubst %, ${SRC}%.cpp, ${FILES})
 HEADERS=$(patsubst %, ${SRC}%.h, ${FILES})

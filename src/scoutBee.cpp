@@ -6,7 +6,9 @@ ScoutBee::ScoutBee()
 }
 
 ScoutBee::ScoutBee(float x, float y, float theta, float size):
-	_x(x), _y(y), _theta(theta), _size(size)
+	_x(x), _y(y), _theta(theta), _velocity(0.001f), _size(size), 
+	_state(REST), 
+	_choice(-1), _choiceGoodness(0), _danceForce(0)
 {
 
 }
@@ -14,6 +16,15 @@ ScoutBee::ScoutBee(float x, float y, float theta, float size):
 ScoutBee::~ScoutBee()
 {
 
+}
+
+void ScoutBee::setGene(float* gene)
+{
+	_gene = gene;
+	_randomChance = gene[0];
+	_followChance = gene[1];
+	_linearDecay = gene[2];
+	_quadraticDecay = gene[3];
 }
 
 void ScoutBee::draw()
@@ -29,14 +40,27 @@ void ScoutBee::draw()
 		glVertex2d(_x , _y-sizeY);
 		glVertex2d(_x-sizeX, _y);
 		glVertex2d(_x , _y+sizeY);
-		//for (int i = 0; i < 360; i+=90) {
-		//	glVertex2d( _size*cos(i/180.0*M_PI) + _x, ratio*_size*sin(i/180.0*M_PI) + _y);
-		//}
 	}
 	glEnd();
 
 	// Draw Yellow point 
-	glColor3f(1.0, 1.0, 0);
+	switch(_state)
+	{
+		case REST:
+			glColor3f(0.5, 0.5, 0);
+			break;
+		case SEARCH_NEW_NESTBOX:
+			glColor3f(1.0, 1.0, 0);
+			break;
+			case FIND_NESTBOX:
+			glColor3f(0.0, 0.0, 1.0);
+			break;
+		case BACK_TO_HOME:
+		case DANCE:
+			glColor3f(1.0, 0.0, 1.0);
+			break;
+	}
+
 	glBegin(GL_POLYGON);
 	{
 		float sizeX = _size*0.5f;
@@ -45,16 +69,132 @@ void ScoutBee::draw()
 		glVertex2d(_x , _y+sizeY);
 		glVertex2d(_x-sizeX, _y);
 		glVertex2d(_x , _y-sizeY);
-		//for (int i = 0; i < 360; i+=90) {
-		//	glVertex2d( 0.5*_size*cos(i/180.0*M_PI) + _x, ratio*0.5*_size*sin(i/180.0*M_PI) + _y);
-		//}
 	}
 	glEnd();
 }
 
-__host__ __device__ void ScoutBee::run(float random)
+__host__ __device__ void ScoutBee::run(float random, float ratio, float hiveX, float hiveY, NestBox* nestBoxes, int qtyNestBoxes, float* choiceProb)
 {
-	_theta += (random*10-5)*3;
-	_x += 0.0001*cos(_theta/180.0*M_PI);
-	_y += 0.0001*sin(_theta/180.0*M_PI);
+	// Movement info
+	const float angleToHive = atan2(_y-hiveY,_x-hiveX)*180.0/M_PI;
+	const float distToHive = sqrt((_x-hiveX)*(_x-hiveX) + (_y-hiveY)*(_y-hiveY));
+	const float inHome = 0.06f;
+	const float danceRadius = 0.005f;
+
+	const float randX = int(random*2342234)%1000/1000.f;
+	const float randY = int(random*9321432)%1000/1000.f;
+
+	float x, y, size;
+	float angleToNestBox, distToNestBox;
+	switch(_state)
+	{
+		case REST:
+			if(distToHive>inHome)
+			{
+				_theta = angleToHive-180;
+				_x += _velocity*cos(_theta/180.0*M_PI)*ratio;
+				_y += _velocity*sin(_theta/180.0*M_PI);
+			}
+			else
+			{
+				_theta += (random*10-5);
+				_x += 0.03f*_velocity*cos(_theta/180.0*M_PI)*ratio;
+				_y += 0.03f*_velocity*sin(_theta/180.0*M_PI);
+			}
+
+			if(random<_randomChance)
+				_state = SEARCH_NEW_NESTBOX;
+			else if(random<(_randomChance+_followChance) && 
+					choiceProb[qtyNestBoxes-1]>0.9)// Some bee already chosen
+			{
+				// Choose which bee to follow
+				for(int i=0; i<qtyNestBoxes; i++)
+				{
+					if(random<=choiceProb[i])
+					{
+						_choice = i;
+						break;
+					}
+				}
+				if(_choice == -1)// Should never enter this if
+					break;
+
+				_state = FIND_NESTBOX;
+			}
+
+			break;
+		case SEARCH_NEW_NESTBOX:
+			if(_x>1 || _x<-1 || _y>1 || _y<-1)
+				_theta = angleToHive-180;
+			_theta += (random*10-5);
+			_x += _velocity*cos(_theta/180.0*M_PI);
+			_y += _velocity*sin(_theta/180.0*M_PI)*ratio;
+
+			for(int i=0; i<qtyNestBoxes; i++)
+			{
+				nestBoxes[i].getPosition(&x, &y, &size);
+				distToNestBox = sqrt((_x-x)*(_x-x) + (_y-y)*(_y-y));
+
+				if(distToNestBox<=size*2)
+				{
+					_state = BACK_TO_HOME;
+					_choice = i;
+					_choiceGoodness = nestBoxes[i].getGoodness(random);
+					_danceForce = _choiceGoodness;
+				}
+			}
+
+			break;
+		case FIND_NESTBOX:
+			nestBoxes[_choice].getPosition(&x, &y, &size);
+
+			angleToNestBox = atan2(_y-y,_x-x)*180.0/M_PI;
+			distToNestBox = sqrt((_x-x)*(_x-x) + (_y-y)*(_y-y));
+
+			_theta = angleToNestBox-180;
+			_theta += (random*10-5);
+			_x += _velocity*cos(_theta/180.0*M_PI);
+			_y += _velocity*sin(_theta/180.0*M_PI)*ratio;
+
+			if(distToNestBox<size*2)
+			{
+				_choiceGoodness = nestBoxes[_choice].getGoodness(random);
+				_danceForce = _choiceGoodness;
+				_state = BACK_TO_HOME;
+			}
+
+			break;
+		case BACK_TO_HOME:
+			_theta = angleToHive-180;
+			_x += _velocity*cos(_theta/180.0*M_PI);
+			_y += _velocity*sin(_theta/180.0*M_PI)*ratio;
+
+			if(distToHive<inHome)
+				_state = DANCE;
+
+			break;
+		case DANCE:
+			if(distToHive>inHome)
+				_theta = angleToHive-180;
+			else
+				_theta += (random*10-5);
+
+			_x += 0.3f*_velocity*cos(_theta/180.0*M_PI);
+			_y += 0.3f*_velocity*sin(_theta/180.0*M_PI)*ratio;
+			_x += 2*randX*danceRadius-danceRadius;
+			_y += (2*randY*danceRadius-danceRadius)*ratio;
+
+			_danceForce -= _linearDecay;
+			_danceForce -= _quadraticDecay*_quadraticDecay;
+
+			if(_danceForce<0)
+			{
+				_choice = -1;
+				_choiceGoodness = 0;
+				_danceForce = 0;
+				_state = REST;
+			}
+
+			break;
+	}
 }

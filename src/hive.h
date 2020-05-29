@@ -8,6 +8,7 @@
 #include "defines.h"
 #include "scoutBee.h"
 #include "utils.h"
+#include "nestBox.h"
 
 // Cuda
 #include <curand.h>
@@ -16,18 +17,48 @@
 class Hive 
 {
 	public:
-		Hive(float x, float y);
+		Hive(float x, float y, float* gene);
 		~Hive();
+
+		void setGene(float* gene) { _gene = gene; }
+		void setNestBoxes(NestBox* nestBoxes, int qtyNestBoxes);
+		void updateConsensus();
+		int getQtyScoutBees() const { return _qtyScoutBees; }
+		int* getConsensus() const { return _consensus; }
+		float getFitness();
+		float* getGene() const { return _gene; }
 
 		void draw();
 		void run();
 	private:
+		// Gene
+		float* _gene;
+		// 0 -> _randomChance;// Chance search new nestBox
+		// 1 -> _followChance;// Chance follow other bee
+		// 2 -> _linearDecay; // Linear supporting decay (0-1)
+		// 3 -> _quadraticDecay; // Quadratic supporting decay (0-1)
+		
+		// Hive info
 		float _x;
 		float _y;
+		float _size;
 
+		// Scout bees
 		const int _qtyScoutBees;
 		ScoutBee* _scoutBees;
 		ScoutBee* _scoutBeesCuda;
+		enum State { REST, SEARCH_NEW_NESTBOX, FIND_NESTBOX, BACK_TO_HOME, DANCE };
+
+		// Nest boxes
+		int _qtyNestBoxes;
+		NestBox* _nestBoxes;
+		NestBox* _nestBoxesCuda;
+
+		// Consensus
+		int* _consensus;
+		// Choice probability (used by bees to select who to follow)
+		float* _choiceProb;
+		float* _choiceProbCuda;
 
 		// Cuda
 		curandState* _cuState;  

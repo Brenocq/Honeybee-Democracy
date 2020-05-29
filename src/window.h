@@ -19,6 +19,7 @@ public:
 
 	// Functions called each frame
 	std::function<void()> draw;
+	std::function<void()> plot;
 	std::function<void()> run;
 private:
 	GLFWwindow *_mainWindow;

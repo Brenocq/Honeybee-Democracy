@@ -1,28 +1,41 @@
 #include "environment.h"
 
-Environment::Environment()
+Environment::Environment():
+	_qtyHives(1)
 {
-	qtyScoutBees = 100;
-	for(int i=0;i<qtyScoutBees;i++)
+	for(int i=_qtyHives; i--;)
 	{
-		float x = (rand()%200-100)/100.0;
-		float y = (rand()%200-100)/100.0;
-		float size = 0.01;
-		float theta = 0.0;
-		ScoutBee bee(x, y, theta, size);
-		scoutBees.push_back(bee);
+		// Avoid spawning on corners
+		float border = 0.8;
+		float x = ((rand()%1000)/1000.f-0.5)*border;
+		float y = ((rand()%1000)/1000.f-0.5)*border;
+
+		Hive* hive = new Hive(x, y);
+		_hives.push_back(hive);
 	}
 }
 
 Environment::~Environment()
 {
-
+	for(Hive* hive : _hives)
+	{
+		delete hive;
+	}
+	_hives.clear();
 }
 
 void Environment::draw()
 {
-	for(auto bee : scoutBees)
+	for(Hive* hive : _hives)
 	{
-		bee.draw();
+		hive->draw();
+	}
+}
+
+void Environment::run()
+{
+	for(Hive* hive : _hives)
+	{
+		hive->run();
 	}
 }

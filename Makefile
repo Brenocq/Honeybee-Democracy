@@ -1,4 +1,4 @@
-CC = g++
+CC = nvcc#g++
 # Text style
 RED    = \033[0;31m
 GREEN  = \033[0;32m
@@ -8,38 +8,45 @@ BOLD   = \033[1m
 # Folders
 BIN	   = bin/
 SRC	   = src/
-LIB    = src/
+LIB    = lib/
 OBJ    = obj/
 
 # Files
-FILES = scoutBee environment
+FILES = utils main window stbImage scoutBee environment hive
 
 SOURCES=$(patsubst %, ${SRC}%.cpp, ${FILES})
-HEADERS=$(patsubst %, ${LIB}%.h, ${FILES})
+HEADERS=$(patsubst %, ${SRC}%.h, ${FILES})
 OBJECTS=$(patsubst %, ${OBJ}%.o, ${FILES})
 
-DEPENDENCIES=${LIB}parameters.h
+#DEPENDENCIES=${LIB}parameters.h
 
 EXECUTABLE=${BIN}beeSimulation
 
 # Flags
-FLAGS= -lGL -lGLU -lglut -Wall -I${LIB}
+FLAGS= -lGL -lGLU -lglfw -lGLEW -I${LIB}
+CUDA_FLAGS = -lcurand
 
 # Targets
-${EXECUTABLE}: ${OBJECTS} ${DEPENDENCIES}
+#${EXECUTABLE}: ${OBJECTS}
+#	@/bin/echo -e "${GREEN}${BOLD}----- Creating executable -----${NC}"
+#	${CC} ${OBJECTS} -o ${EXECUTABLE} ${FLAGS} 
+${EXECUTABLE}: ${OBJECTS}
 	@/bin/echo -e "${GREEN}${BOLD}----- Creating executable -----${NC}"
-	${CC} -g ${SRC}main.cpp -o ${EXECUTABLE} ${FLAGS} ${OBJECTS} 
+	${CC} -arch=sm_30 ${OBJECTS} -o ${EXECUTABLE} ${FLAGS} ${CUDA_FLAGS}
 
 # Compile project files
+#${OBJ}%.o: ${SRC}%.cpp
+#	@/bin/echo -e "${GREEN}Compiling $<${NC}"
+#	${CC} -c $< -o $@ ${FLAGS} 
 ${OBJ}%.o: ${SRC}%.cpp
 	@/bin/echo -e "${GREEN}Compiling $<${NC}"
-	${CC} -c $< -o $@ ${FLAGS} 
+	${CC} -x cu -arch=sm_30 -dc $< -o $@ ${FLAGS} ${CUDA_FLAGS}
 
 clean:
 	@/bin/echo -e "${GREEN}${BOLD}----- Cleaning project -----${NC}"
 	rm -rf ${OBJ}*.o
 	rm -rf ${EXECUTABLE}
 
-run: ${EXECUTABLE}
+run: ${EXECUTABLE} ${SOURCES}
 	@/bin/echo -e "${GREEN}${BOLD}----- Running ${EXECUTABLE} -----${NC}"
 	./${EXECUTABLE}

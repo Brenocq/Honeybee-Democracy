@@ -4,9 +4,8 @@
 #include <stdlib.h>
 #include <iostream>
 #include <vector>
-#include "scoutBee.h"
-
-using namespace std;
+#include "defines.h"
+#include "hive.h"
 
 class Environment 
 {
@@ -15,9 +14,9 @@ class Environment
 		~Environment();
 
 		void draw();
+		void run();
 	private:
-		int qtyScoutBees;
-		int qtyHouses;
-		vector<ScoutBee> scoutBees;
+		int _qtyHives;
+		std::vector<Hive*> _hives;
 };
 #endif// ENVIRONMENT_H

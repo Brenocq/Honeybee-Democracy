@@ -6,6 +6,7 @@
 #include <chrono>
 #include <math.h>
 #include "defines.h"
+#include "parameters.h"
 #include "scoutBee.h"
 #include "utils.h"
 #include "nestBox.h"
@@ -17,22 +18,23 @@
 class Hive 
 {
 	public:
-		Hive(float x, float y, float* gene);
+		Hive(float x, float y, double* gene);
 		~Hive();
 
-		void setGene(float* gene) { _gene = gene; }
+		void reset(float x, float y, double* gene);
+		void setGene(double* gene) { _gene = gene; }
 		void setNestBoxes(NestBox* nestBoxes, int qtyNestBoxes);
 		void updateConsensus();
 		int getQtyScoutBees() const { return _qtyScoutBees; }
 		int* getConsensus() const { return _consensus; }
 		float getFitness();
-		float* getGene() const { return _gene; }
+		double* getGene() const { return _gene; }
 
 		void draw();
 		void run();
 	private:
 		// Gene
-		float* _gene;
+		double* _gene;
 		// 0 -> _randomChance;// Chance search new nestBox
 		// 1 -> _followChance;// Chance follow other bee
 		// 2 -> _linearDecay; // Linear supporting decay (0-1)
@@ -55,6 +57,7 @@ class Hive
 		NestBox* _nestBoxesCuda;
 
 		// Consensus
+		float _fitness;
 		int* _consensus;
 		// Choice probability (used by bees to select who to follow)
 		float* _choiceProb;

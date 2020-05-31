@@ -11,8 +11,8 @@ __global__ void runCuda(ScoutBee* bees, int qtyBees, NestBox* nestBoxes, int qty
     if(idx < qtyBees) { bees[idx].run(curand_uniform(&state[idx]), ratio, hiveX, hiveY, nestBoxes, qtyNestBoxes, choiceProb); }
 }
 
-Hive::Hive(float x, float y, float* gene):
-	_x(x), _y(y), _size(0.02f), _qtyScoutBees(100000), _gene(gene)
+Hive::Hive(float x, float y, double* gene):
+		_x(x), _y(y), _size(0.01f), _qtyScoutBees(100), _gene(gene), _fitness(0)
 {
 	_scoutBees = new ScoutBee[_qtyScoutBees];
 
@@ -40,6 +40,28 @@ Hive::~Hive()
 	cudaFree(_scoutBeesCuda);
 	//if(_scoutBees != nullptr)// free() invalid pointer error...?
 	//	delete _scoutBees;
+}
+
+void Hive::reset(float x, float y, double* gene)
+{
+	_x = x;
+	_y = y;
+	//delete _gene;
+	_gene = gene;
+	_fitness = 0;
+
+	for(int i=0; i<_qtyScoutBees; i++)
+	{
+		float ratio = float(MAIN_WINDOW_WIDTH)/MAIN_WINDOW_HEIGHT;
+
+		float x = Utils::randomGauss(_x, 0.03);
+		float y = Utils::randomGauss(_y, 0.03*ratio);
+		float theta = rand()%360;
+		float size = 0.005f;
+
+		_scoutBees[i] = ScoutBee(x, y, theta, size);
+		_scoutBees[i].setGene(_gene);
+	}
 }
 
 void Hive::setNestBoxes(NestBox* nestBoxes, int qtyNestBoxes) 
@@ -78,20 +100,23 @@ void Hive::updateConsensus()
 		}
 	}
 
-	// Check consensus reached
+	// Check consensus reached and update fitness
 	for(int i=0; i<_qtyNestBoxes; i++)
 	{
 		float consensus = float(_consensus[i])/_qtyScoutBees;
-		if(consensus>0.7)
-		{
-			std::cout << "Consensus reached!" << consensus << std::endl;
-			float x, y, size;
-			_nestBoxes[i].getPosition(&x, &y, &size);
-			_x = x;
-			_y = y;
-		}
+		float g = _nestBoxes[i].getRealGoodness();// Nestbox goodness
+
+		_fitness = g*consensus>_fitness? g*consensus : _fitness;
+
+		//if(consensus>0.7)
+		//{
+		//	std::cout << "Consensus reached!" << consensus << std::endl;
+		//	float x, y, size;
+		//	_nestBoxes[i].getPosition(&x, &y, &size);
+		//	_x = x;
+		//	_y = y;
+		//}
 	}
-	
 
 	// Build choice probabilities
 	float from = 0;
@@ -99,7 +124,7 @@ void Hive::updateConsensus()
 	{
 		float to = 0;
 		if(beesWithChoice>0)
-			to = _consensus[i]/beesWithChoice;
+			to = _consensus[i]/_qtyScoutBees;
 		_choiceProb[i] = from + to;
 		from = _choiceProb[i];
 	}
@@ -110,20 +135,23 @@ void Hive::updateConsensus()
 
 float Hive::getFitness()
 {
-	float maxConsensus = 0;
-	for(int i=0; i<_qtyNestBoxes; i++)
-	{
-		if(float(_consensus[i])/_qtyScoutBees > maxConsensus)
-		{
-			maxConsensus = float(_consensus[i])/_qtyScoutBees;
-		}
-	}
-	return maxConsensus;
+	//float maxConsensus = 0;
+	//float nestBoxQuality = 0;
+	//for(int i=0; i<_qtyNestBoxes; i++)
+	//{
+	//	if(float(_consensus[i])/_qtyScoutBees > maxConsensus)
+	//	{
+	//		maxConsensus = float(_consensus[i])/_qtyScoutBees;
+	//		nestBoxQuality = _nestBoxes[i].getRealGoodness();
+	//	}
+	//}
+	//return maxConsensus*nestBoxQuality;
+	return _fitness;
 }
 
 void Hive::draw()
 {
-	auto start = std::chrono::high_resolution_clock::now();
+	//auto start = std::chrono::high_resolution_clock::now();
 
 	//---------- Draw hive ----------//
 	float ratio = float(MAIN_WINDOW_WIDTH)/MAIN_WINDOW_HEIGHT;
@@ -145,27 +173,30 @@ void Hive::draw()
 		_scoutBees[i].draw();
 	}
 
-	auto finish = std::chrono::high_resolution_clock::now();
-	std::chrono::duration<double> elapsed = finish - start;
+	//auto finish = std::chrono::high_resolution_clock::now();
+	//std::chrono::duration<double> elapsed = finish - start;
 	//std::cout << "Draw: " << elapsed.count() << "s\n";
 }
 
 void Hive::run()
 {
 	bool useCuda = true;
-	auto start = std::chrono::high_resolution_clock::now();
+	//auto start = std::chrono::high_resolution_clock::now();
 
 	updateConsensus();
 	float ratio = float(MAIN_WINDOW_WIDTH)/MAIN_WINDOW_HEIGHT;
-	int cycles = 10;
+	int cycles = STEPS_OFFLINE;
 	if(!useCuda)
 	{
+		int i = 0;
 		while(cycles--){
+			i++;
 			for(int i=0;i<_qtyScoutBees; i++)
 			{
 				_scoutBees[i].run(rand()%1000/1000.f, ratio, _x, _y, _nestBoxes, _qtyNestBoxes, _choiceProb);
 			}
 		}
+		std::cout<<i<<std::endl;
 	}
 	else
 	{
@@ -179,9 +210,9 @@ void Hive::run()
 		cudaMemcpy(_scoutBees, _scoutBeesCuda, _qtyScoutBees*sizeof(ScoutBee), cudaMemcpyDeviceToHost);
 	}
 
-	auto finish = std::chrono::high_resolution_clock::now();
+	//auto finish = std::chrono::high_resolution_clock::now();
 
-	std::chrono::duration<double> elapsed = finish - start;
+	//std::chrono::duration<double> elapsed = finish - start;
 	//std::cout << "Run: " << elapsed.count() << "s\n";
 }
 

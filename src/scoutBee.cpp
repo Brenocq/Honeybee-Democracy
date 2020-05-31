@@ -6,7 +6,7 @@ ScoutBee::ScoutBee()
 }
 
 ScoutBee::ScoutBee(float x, float y, float theta, float size):
-	_x(x), _y(y), _theta(theta), _velocity(0.001f), _size(size), 
+	_x(x), _y(y), _theta(theta), _velocity(3.0f), _size(size), 
 	_state(REST), 
 	_choice(-1), _choiceGoodness(0), _danceForce(0)
 {
@@ -18,7 +18,7 @@ ScoutBee::~ScoutBee()
 
 }
 
-void ScoutBee::setGene(float* gene)
+void ScoutBee::setGene(double* gene)
 {
 	_gene = gene;
 	_randomChance = gene[0];
@@ -83,6 +83,7 @@ __host__ __device__ void ScoutBee::run(float random, float ratio, float hiveX, f
 
 	const float randX = int(random*2342234)%1000/1000.f;
 	const float randY = int(random*9321432)%1000/1000.f;
+	const float maxRotation = 20;
 
 	float x, y, size;
 	float angleToNestBox, distToNestBox;
@@ -92,14 +93,14 @@ __host__ __device__ void ScoutBee::run(float random, float ratio, float hiveX, f
 			if(distToHive>inHome)
 			{
 				_theta = angleToHive-180;
-				_x += _velocity*cos(_theta/180.0*M_PI)*ratio;
-				_y += _velocity*sin(_theta/180.0*M_PI);
+				_x += _size*_velocity*cos(_theta/180.0*M_PI)*ratio;
+				_y += _size*_velocity*sin(_theta/180.0*M_PI);
 			}
 			else
 			{
-				_theta += (random*10-5);
-				_x += 0.03f*_velocity*cos(_theta/180.0*M_PI)*ratio;
-				_y += 0.03f*_velocity*sin(_theta/180.0*M_PI);
+				_theta += (random*maxRotation-maxRotation/2);
+				_x += 0.03f*_size*_velocity*cos(_theta/180.0*M_PI)*ratio;
+				_y += 0.03f*_size*_velocity*sin(_theta/180.0*M_PI);
 			}
 
 			if(random<_randomChance)
@@ -126,9 +127,9 @@ __host__ __device__ void ScoutBee::run(float random, float ratio, float hiveX, f
 		case SEARCH_NEW_NESTBOX:
 			if(_x>1 || _x<-1 || _y>1 || _y<-1)
 				_theta = angleToHive-180;
-			_theta += (random*10-5);
-			_x += _velocity*cos(_theta/180.0*M_PI);
-			_y += _velocity*sin(_theta/180.0*M_PI)*ratio;
+			_theta += (random*maxRotation-maxRotation/2);
+			_x += _size*_velocity*cos(_theta/180.0*M_PI);
+			_y += _size*_velocity*sin(_theta/180.0*M_PI)*ratio;
 
 			for(int i=0; i<qtyNestBoxes; i++)
 			{
@@ -152,9 +153,9 @@ __host__ __device__ void ScoutBee::run(float random, float ratio, float hiveX, f
 			distToNestBox = sqrt((_x-x)*(_x-x) + (_y-y)*(_y-y));
 
 			_theta = angleToNestBox-180;
-			_theta += (random*10-5);
-			_x += _velocity*cos(_theta/180.0*M_PI);
-			_y += _velocity*sin(_theta/180.0*M_PI)*ratio;
+			_theta += (random*maxRotation-maxRotation/2);
+			_x += _size*_velocity*cos(_theta/180.0*M_PI);
+			_y += _size*_velocity*sin(_theta/180.0*M_PI)*ratio;
 
 			if(distToNestBox<size*2)
 			{
@@ -166,8 +167,8 @@ __host__ __device__ void ScoutBee::run(float random, float ratio, float hiveX, f
 			break;
 		case BACK_TO_HOME:
 			_theta = angleToHive-180;
-			_x += _velocity*cos(_theta/180.0*M_PI);
-			_y += _velocity*sin(_theta/180.0*M_PI)*ratio;
+			_x += _size*_velocity*cos(_theta/180.0*M_PI);
+			_y += _size*_velocity*sin(_theta/180.0*M_PI)*ratio;
 
 			if(distToHive<inHome)
 				_state = DANCE;
@@ -177,10 +178,10 @@ __host__ __device__ void ScoutBee::run(float random, float ratio, float hiveX, f
 			if(distToHive>inHome)
 				_theta = angleToHive-180;
 			else
-				_theta += (random*10-5);
+				_theta += (random*maxRotation-maxRotation/2);
 
-			_x += 0.3f*_velocity*cos(_theta/180.0*M_PI);
-			_y += 0.3f*_velocity*sin(_theta/180.0*M_PI)*ratio;
+			_x += 0.3f*_size*_velocity*cos(_theta/180.0*M_PI);
+			_y += 0.3f*_size*_velocity*sin(_theta/180.0*M_PI)*ratio;
 			_x += 2*randX*danceRadius-danceRadius;
 			_y += (2*randY*danceRadius-danceRadius)*ratio;
 

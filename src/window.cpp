@@ -21,7 +21,7 @@ Window::Window()
 	GLFWmonitor* monitor = WINDOW_FULLSCREEN ? glfwGetPrimaryMonitor() : nullptr;
 
 	_mainWindow = glfwCreateWindow(MAIN_WINDOW_WIDTH, MAIN_WINDOW_HEIGHT, "Honeybee simulation", monitor, nullptr);
-	glfwSetWindowPos(_mainWindow, mode->width/2-MAIN_WINDOW_WIDTH/2, 0);
+	glfwSetWindowPos(_mainWindow, mode->width/2-(MAIN_WINDOW_WIDTH+CONSENSUS_PLOT_WINDOW_WIDTH)/2, 0);
 	
 	if(_mainWindow == nullptr)
 	{
@@ -32,11 +32,23 @@ Window::Window()
 
 	// Set to draw to this window
 	glfwMakeContextCurrent(_mainWindow);
-	//----- Create plot window -----//
-	_plotWindow = glfwCreateWindow(PLOT_WINDOW_WIDTH, PLOT_WINDOW_HEIGHT, "Honeybee plotting", monitor, nullptr);
-	glfwSetWindowPos(_plotWindow, mode->width/2-PLOT_WINDOW_WIDTH/2, MAIN_WINDOW_HEIGHT+100);
+	//----- Create consensus window -----//
+	_consensusWindow = glfwCreateWindow(CONSENSUS_PLOT_WINDOW_WIDTH, CONSENSUS_PLOT_WINDOW_HEIGHT, "Consensus", monitor, nullptr);
+	//glfwSetWindowPos(_plotWindow, mode->width/2-PLOT_WINDOW_WIDTH/2, MAIN_WINDOW_HEIGHT+100);
+	glfwSetWindowPos(_consensusWindow, mode->width/2+(MAIN_WINDOW_WIDTH+CONSENSUS_PLOT_WINDOW_WIDTH)/2-CONSENSUS_PLOT_WINDOW_WIDTH, 0);
 	
-	if(_plotWindow == nullptr)
+	if(_consensusWindow == nullptr)
+	{
+		std::cout << BOLDRED << "[Window] Failed to create plot window!" << RESET << std::endl;
+		glfwTerminate();
+		exit(1);
+	}
+	//----- Create generation window -----//
+	_generationWindow = glfwCreateWindow(EVOLUTION_PLOT_WINDOW_WIDTH, EVOLUTION_PLOT_WINDOW_HEIGHT, "Evolution", monitor, nullptr);
+	//glfwSetWindowPos(_plotWindow, mode->width/2-PLOT_WINDOW_WIDTH/2, MAIN_WINDOW_HEIGHT+100);
+	glfwSetWindowPos(_generationWindow, mode->width/2-(MAIN_WINDOW_WIDTH+CONSENSUS_PLOT_WINDOW_WIDTH)/2, MAIN_WINDOW_HEIGHT+85);
+	
+	if(_generationWindow == nullptr)
 	{
 		std::cout << BOLDRED << "[Window] Failed to create plot window!" << RESET << std::endl;
 		glfwTerminate();
@@ -97,15 +109,26 @@ void Window::start()
 
 		glfwSwapBuffers(_mainWindow);
 
-		//----- Draw to plotting window -----//
-		glfwMakeContextCurrent(_plotWindow);
+		//----- Draw to consensus window -----//
+		glfwMakeContextCurrent(_consensusWindow);
 		glClearColor(1.0, 1.0, 1.0, 1.0);
 		glClear(GL_COLOR_BUFFER_BIT);
 		
-		// Call draw function
-		if(plot != nullptr)
-			plot();
+		// Call consensus function
+		if(consensus != nullptr)
+			consensus();
 
-		glfwSwapBuffers(_plotWindow);
+		glfwSwapBuffers(_consensusWindow);
+		
+		//----- Draw to generation window -----//
+		glfwMakeContextCurrent(_generationWindow);
+		glClearColor(1.0, 1.0, 1.0, 1.0);
+		glClear(GL_COLOR_BUFFER_BIT);
+		
+		// Call generation function
+		if(generation != nullptr)
+			generation();
+
+		glfwSwapBuffers(_generationWindow);
 	}
 }

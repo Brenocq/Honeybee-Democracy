@@ -19,10 +19,12 @@ public:
 
 	// Functions called each frame
 	std::function<void()> draw;
-	std::function<void()> plot;
+	std::function<void()> consensus;
+	std::function<void()> generation;
 	std::function<void()> run;
 private:
 	GLFWwindow *_mainWindow;
-	GLFWwindow *_plotWindow;
+	GLFWwindow *_consensusWindow;
+	GLFWwindow *_generationWindow;
 };
 #endif// WINDOW_H

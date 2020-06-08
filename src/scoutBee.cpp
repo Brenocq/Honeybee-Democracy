@@ -24,7 +24,7 @@ void ScoutBee::setGene(double* gene)
 	_randomChance = gene[0];
 	_followChance = gene[1];
 	_linearDecay = gene[2];
-	_quadraticDecay = gene[3];
+	_danceForceExponent = gene[3];
 }
 
 void ScoutBee::draw()
@@ -105,13 +105,14 @@ __host__ __device__ void ScoutBee::run(float random, float ratio, float hiveX, f
 
 			if(random<_randomChance)
 				_state = SEARCH_NEW_NESTBOX;
-			else if(random<(_randomChance+_followChance) && 
-					choiceProb[qtyNestBoxes-1]>0.9)// Some bee already chosen
+			else if(random<(_randomChance+_followChance))// Some bee already chosen
 			{
+				float sum = 0;
 				// Choose which bee to follow
 				for(int i=0; i<qtyNestBoxes; i++)
 				{
-					if(random<=choiceProb[i])
+					sum += choiceProb[i];
+					if(random<=sum)
 					{
 						_choice = i;
 						break;
@@ -160,7 +161,7 @@ __host__ __device__ void ScoutBee::run(float random, float ratio, float hiveX, f
 			if(distToNestBox<size*2)
 			{
 				_choiceGoodness = nestBoxes[_choice].getGoodness(random);
-				_danceForce = _choiceGoodness;
+				_danceForce = pow(_choiceGoodness, _danceForceExponent*10);
 				_state = BACK_TO_HOME;
 			}
 
@@ -186,7 +187,6 @@ __host__ __device__ void ScoutBee::run(float random, float ratio, float hiveX, f
 			_y += (2*randY*danceRadius-danceRadius)*ratio;
 
 			_danceForce -= _linearDecay;
-			_danceForce -= _quadraticDecay*_quadraticDecay;
 
 			if(_danceForce<0)
 			{

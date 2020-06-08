@@ -18,7 +18,7 @@ NestBox::~NestBox()
 
 __host__ __device__ float NestBox::getGoodness(float random) const
 {
-	float goodness = _goodness + (random-0.5f)*_goodness*0.2;
+	float goodness = _goodness + (random-0.5f)*1.0;
 	if(goodness>1)
 		goodness = 1;
 	if(goodness<0)

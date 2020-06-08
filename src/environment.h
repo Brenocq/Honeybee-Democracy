@@ -19,7 +19,7 @@ class Environment
 		void draw();
 		void plotConsensus();
 		void plotGeneration();
-		void run();
+		void run(int steps);
 	private:
 		int _qtyHives;
 		int _qtyNestBoxes;

@@ -11,8 +11,8 @@ __global__ void runCuda(ScoutBee* bees, int qtyBees, NestBox* nestBoxes, int qty
     if(idx < qtyBees) { bees[idx].run(curand_uniform(&state[idx]), ratio, hiveX, hiveY, nestBoxes, qtyNestBoxes, choiceProb); }
 }
 
-Hive::Hive(float x, float y, double* gene):
-		_x(x), _y(y), _size(0.01f), _qtyScoutBees(100), _gene(gene), _fitness(0)
+Hive::Hive(float x, float y, double* gene, float r, float g, float b):
+		_x(x), _y(y), _size(0.01f), _qtyScoutBees(200), _gene(gene), _fitness(0), _r(r), _g(g), _b(b)
 {
 	_scoutBees = new ScoutBee[_qtyScoutBees];
 
@@ -46,7 +46,6 @@ void Hive::reset(float x, float y, double* gene)
 {
 	_x = x;
 	_y = y;
-	//delete _gene;
 	_gene = gene;
 	_fitness = 0;
 
@@ -117,16 +116,26 @@ void Hive::updateConsensus()
 		//	_y = y;
 		//}
 	}
+	//for(int i=0; i<_qtyNestBoxes; i++)
+	//{
+	//	printf("%d ", _consensus[i]);
+	//}
+	//printf("\n");
 
 	// Build choice probabilities
-	float from = 0;
+	//float from = 0;
+	//for(int i=0; i<_qtyNestBoxes; i++)
+	//{
+	//	float to = 0;
+	//	if(beesWithChoice>0)
+	//		to = _consensus[i]/_qtyScoutBees;
+	//	_choiceProb[i] = from + to;
+	//	from = _choiceProb[i];
+	//}
+	
 	for(int i=0; i<_qtyNestBoxes; i++)
 	{
-		float to = 0;
-		if(beesWithChoice>0)
-			to = _consensus[i]/_qtyScoutBees;
-		_choiceProb[i] = from + to;
-		from = _choiceProb[i];
+		_choiceProb[i] = float(_consensus[i])/_qtyScoutBees;
 	}
 
 	cudaMemcpy(_choiceProbCuda, _choiceProb, _qtyNestBoxes*sizeof(float), cudaMemcpyHostToDevice);
@@ -149,13 +158,25 @@ float Hive::getFitness()
 	return _fitness;
 }
 
+float Hive::getColor(int color)
+{
+	float c;
+	switch (color)
+	{
+		case 1: c = _r; break;
+		case 2: c = _g; break;
+		case 3: c = _b; break;
+	}
+	return c;
+}
+
 void Hive::draw()
 {
 	//auto start = std::chrono::high_resolution_clock::now();
 
 	//---------- Draw hive ----------//
 	float ratio = float(MAIN_WINDOW_WIDTH)/MAIN_WINDOW_HEIGHT;
-	glColor3f(0, 0, 1);
+	glColor3f(_r, _g, _b);
 	glBegin(GL_POLYGON);
 	{
 		float sizeX = _size;
@@ -178,14 +199,14 @@ void Hive::draw()
 	//std::cout << "Draw: " << elapsed.count() << "s\n";
 }
 
-void Hive::run()
+void Hive::run(int steps)
 {
 	bool useCuda = true;
 	//auto start = std::chrono::high_resolution_clock::now();
 
 	updateConsensus();
 	float ratio = float(MAIN_WINDOW_WIDTH)/MAIN_WINDOW_HEIGHT;
-	int cycles = STEPS_OFFLINE;
+	int cycles = steps;
 	if(!useCuda)
 	{
 		int i = 0;

@@ -18,7 +18,7 @@
 class Hive 
 {
 	public:
-		Hive(float x, float y, double* gene);
+		Hive(float x, float y, double* gene, float r, float g, float b);
 		~Hive();
 
 		void reset(float x, float y, double* gene);
@@ -29,21 +29,23 @@ class Hive
 		int* getConsensus() const { return _consensus; }
 		float getFitness();
 		double* getGene() const { return _gene; }
+		float getColor(int color);
 
 		void draw();
-		void run();
+		void run(int steps);
 	private:
 		// Gene
 		double* _gene;
 		// 0 -> _randomChance;// Chance search new nestBox
 		// 1 -> _followChance;// Chance follow other bee
 		// 2 -> _linearDecay; // Linear supporting decay (0-1)
-		// 3 -> _quadraticDecay; // Quadratic supporting decay (0-1)
+		// 3 -> _danceForceExponent; // dance force = (nestbox goodness)^danceForceExponent (0-1) mapped to (0-10)
 		
 		// Hive info
 		float _x;
 		float _y;
 		float _size;
+		float _r,_g,_b;
 
 		// Scout bees
 		const int _qtyScoutBees;

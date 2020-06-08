@@ -1,18 +1,18 @@
 #include <stdlib.h>
 #include <time.h>
-#include <functional>
 
 #include "window.h"
 #include "environment.h"
 
 
 int main(int argc, char** argv){
-	srand(time(NULL));
+	//srand(time(NULL));
+	srand(42);
 
 	Environment env = Environment();
 
 	Window window = Window();
-	window.run = [&env](){ env.run(); };
+	window.run = [&env](int steps){ env.run(steps); };
 	window.draw = [&env](){ env.draw(); };
 	window.consensus = [&env](){ env.plotConsensus(); };
 	window.generation = [&env](){ env.plotGeneration(); };

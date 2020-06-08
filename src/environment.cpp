@@ -1,15 +1,17 @@
 #include "environment.h"
 
 Environment::Environment():
-	_qtyHives(50), _qtyNestBoxes(20), _step(0), _repetition(0), _generation(0)
+	_qtyHives(10), _qtyNestBoxes(20), _step(0), _repetition(0), _generation(0)
 {
 	// Avoid spawning on corners
 	float border = 0.9;
 
+	// Create the nestbox with the qty of boxes
 	_nestBoxes = new NestBox[_qtyNestBoxes];
 
 	for(int i=0; i<_qtyNestBoxes; i++)
 	{
+		// Initialize the nestbox in a random position
 		float x = ((rand()%2000)/1000.f-1.0)*border;
 		float y = ((rand()%2000)/1000.f-1.0)*border;
 		float goodness = (rand()%1000)/1000.f;
@@ -19,6 +21,7 @@ Environment::Environment():
 
 	for(int i=0; i<_qtyHives; i++)
 	{
+		// Initialize the hive in a random position
 		float x = ((rand()%2000)/1000.f-1.0)*border;
 		float y = ((rand()%2000)/1000.f-1.0)*border;
 
@@ -27,11 +30,25 @@ Environment::Environment():
 		gene[1] = rand()%100000000/100000000.f;//0.3;//
 		gene[2] = rand()%100000000/100000000.f;//0.0001;//
 		gene[3] = rand()%100000000/100000000.f;//0;//
+
+		float r = rand()%100/100.f;
+		float g = rand()%100/100.f;
+		float b = rand()%100/100.f;
 		
-		Hive* hive = new Hive(x, y, gene);
+		Hive* hive = new Hive(x, y, gene, r, g, b);
 		hive->setNestBoxes(_nestBoxes, _qtyNestBoxes);
 		
 		_hives.push_back(hive);
+
+		//if(i==0)
+		//{
+		//	gene[0] = 0.0005f;//rand()%100000000/100000000.f;//0.00005;//
+		//	gene[1] = 0.003;//rand()%100000000/100000000.f;//0.3;//
+		//	gene[2] = 0.001;//rand()%100000000/100000000.f;//0.0001;//
+		//	gene[3] = 0;//rand()%100000000/100000000.f;//0;//
+
+		//	_hives[0]->reset(x, y, gene);
+		//}
 	}
 }
 
@@ -51,6 +68,20 @@ void Environment::draw()
 	for(int i=0; i<_qtyNestBoxes; i++)
 		_nestBoxes[i].draw();
 
+	// Find best hive
+	//if(_generationFitness.size())
+	//int bestIndex = 0;
+	//float bestFitness = _generationFitness.back()[0];
+	//for(int i=0;i<_qtyHives;i++)
+	//{
+	//	float fitness = _generationFitness.back()[i];
+	//	if(fitness > bestFitness)
+	//	{
+	//		bestIndex = i;
+	//		bestFitness = fitness;
+	//	}
+	//}
+	//_hives[bestIndex]->draw();
 	for(auto hive : _hives)
 		hive->draw();
 
@@ -85,10 +116,30 @@ void Environment::plotConsensus()
 		int* consensus = hive->getConsensus();
 		int qtyScoutBees = hive->getQtyScoutBees();
 
-		// Plot nest boxes
+		std::vector<std::pair<float, int>> orderedNestBoxes;
+
 		for(int i=0; i<_qtyNestBoxes; i++)
 		{
 			float goodness = _nestBoxes[i].getRealGoodness();
+			orderedNestBoxes.push_back(std::make_pair(goodness,i));
+		}
+		std::sort(orderedNestBoxes.begin(), orderedNestBoxes.end());
+
+		// Plot background color
+		glColor3f(hive->getColor(1), hive->getColor(2), hive->getColor(3));
+		glBegin(GL_POLYGON);
+		{
+			glVertex2d(-1, offsetY+sizeColorBar/3);
+			glVertex2d(-1, offsetY);
+			glVertex2d(1, offsetY);
+			glVertex2d(1, offsetY+sizeColorBar/3);
+		}
+		glEnd();
+
+		// Plot nest boxes
+		for(int i=0; i<_qtyNestBoxes; i++)
+		{
+			float goodness = orderedNestBoxes[i].first;
 			glColor3f(goodness, 0, goodness);
 			glBegin(GL_POLYGON);
 			{
@@ -102,10 +153,10 @@ void Environment::plotConsensus()
 			glColor3f(0, 0, 0);
 			glBegin(GL_POLYGON);
 			{
-				glVertex2d(-1+offset*(i+1)-size*0.5, offsetY+sizeColorBar+maxBarSize*float(consensus[i])/qtyScoutBees);
+				glVertex2d(-1+offset*(i+1)-size*0.5, offsetY+sizeColorBar+maxBarSize*float(consensus[orderedNestBoxes[i].second])/qtyScoutBees);
 				glVertex2d(-1+offset*(i+1)-size*0.5, offsetY+sizeColorBar);
 				glVertex2d(-1+offset*(i+1)+size*0.5, offsetY+sizeColorBar);
-				glVertex2d(-1+offset*(i+1)+size*0.5, offsetY+sizeColorBar+maxBarSize*float(consensus[i])/qtyScoutBees);
+				glVertex2d(-1+offset*(i+1)+size*0.5, offsetY+sizeColorBar+maxBarSize*float(consensus[orderedNestBoxes[i].second])/qtyScoutBees);
 			}
 			glEnd();
 		}
@@ -121,6 +172,7 @@ void Environment::plotGeneration()
 		for(int j=0; j<_qtyHives; j++)
 		{
 			glColor3f(0,0,0);
+			glColor3f(_hives[j]->getColor(1), _hives[j]->getColor(2), _hives[j]->getColor(3));
 			glBegin(GL_LINES);
 			{
 				glVertex2f(lastXPos, _generationFitness[i-1][j]/100.f*2-1);
@@ -131,14 +183,14 @@ void Environment::plotGeneration()
 	}
 }
 
-void Environment::run()
+void Environment::run(int steps)
 {
 	for(auto hive : _hives)
 	{
-		hive->run();
+		hive->run(steps);
 	}
 
-	_step+=STEPS_OFFLINE;
+	_step+=steps;
 	//std::cout << _step << "/" << STEPS_PER_GENERATION << std::endl;
 
 	//---------------- Repetition finished -------------------//
@@ -187,17 +239,6 @@ void Environment::run()
 			// Reset generation
 			_generation++;
 			_repetition=0;
-
-			// Reset nest boxes
-			float border = 0.9;
-			for(int i=0; i<_qtyNestBoxes; i++)
-			{
-				float x = ((rand()%2000)/1000.f-1.0)*border;
-				float y = ((rand()%2000)/1000.f-1.0)*border;
-				float goodness = (rand()%1000)/1000.f;
-
-				_nestBoxes[i] = NestBox(x, y, goodness);
-			}
 
 			// Calculate fitness
 			_generationFitness.push_back({});
@@ -265,6 +306,7 @@ void Environment::run()
 								mutationForce = 0.01;
 								break;
 						}
+						mutationForce = 1;
 
 						do
 							gene[j] = bestGene[j]*0.5f + gene[j]*0.5f + mutationForce*bestGene[j]*(rand()%1000/1000.0 - 500/1000.0);
@@ -280,7 +322,7 @@ void Environment::run()
 			}
 			
 			// Predation
-			if(_generation%5==0)
+			if(_generation%15==0)
 			{
 				std::sort(hivesFitness.begin(), hivesFitness.end());	
 				for(int i=0;i<int(_qtyHives/10);i++)

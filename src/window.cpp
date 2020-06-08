@@ -1,5 +1,22 @@
 #include "window.h"
 
+int Window::_stepsOffline = STEPS_OFFLINE;
+
+void Window::glfwKeyCallback(GLFWwindow* window, const int key, const int scancode, const int action, const int mods)
+{
+	if(action == GLFW_PRESS)
+	{
+		switch (key)
+		{
+			case GLFW_KEY_SPACE: 
+				_stepsOffline = _stepsOffline==STEPS_OFFLINE ? 1 : STEPS_OFFLINE; 
+				printf("Offline steps changed to %d\n", _stepsOffline);
+				break;
+			default: break;
+		}
+	}
+}
+
 Window::Window()
 {
 	draw = nullptr;
@@ -72,6 +89,7 @@ Window::Window()
 	if(WINDOW_CURSOR_DISABLED)
 		glfwSetInputMode(_mainWindow, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
+	glfwSetKeyCallback(_mainWindow, glfwKeyCallback);
 }
 
 Window::~Window()
@@ -101,7 +119,7 @@ void Window::start()
 
 		// Call run function
 		if(run != nullptr)
-			run();
+			run(_stepsOffline);
 
 		// Call draw function
 		if(draw != nullptr)

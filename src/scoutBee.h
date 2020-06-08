@@ -36,7 +36,7 @@ class ScoutBee
 		double _randomChance;// Chance search new nestBox
 		double _followChance;// Chance follow other bee
 		double _linearDecay; // Linear supporting decay (0-1)
-		double _quadraticDecay; // Quadratic supporting decay (0-1)
+		double _danceForceExponent; // Dance force exponent (0-1) mapped to (0-10)
 
 		// Bee state
 		State _state;

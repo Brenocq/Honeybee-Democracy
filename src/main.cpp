@@ -12,11 +12,12 @@ int main(int argc, char** argv){
 	Environment env = Environment();
 
 	Window window = Window();
-	window.run = [&env](int steps){ env.run(steps); };
+	window.run = [&env, argv](int steps){ env.run(steps, Data::load(argv[1])); };
 	window.draw = [&env](){ env.draw(); };
 	window.consensus = [&env](){ env.plotConsensus(); };
 	window.generation = [&env](){ env.plotGeneration(); };
 	window.start();
 
+	//datafile.close();
 	return 0;
 }

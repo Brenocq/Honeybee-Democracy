@@ -1,0 +1,66 @@
+Generation 0
+(0) fitness = 0.473
+(1) fitness = 0.4555
+(2) fitness = 0.8755
+(3) fitness = 0.7785
+(4) fitness = 0.8145
+(5) fitness = 0.865
+(6) fitness = 1.07925
+(7) fitness = 1.4205
+(8) fitness = 2.24375
+(9) fitness = 0.47175
+Generation 1
+(0) fitness = 0.48625
+(1) fitness = 0.4615
+(2) fitness = 0.7275
+(3) fitness = 1.10325
+(4) fitness = 0.79475
+(5) fitness = 0.45825
+(6) fitness = 0.55125
+(7) fitness = 0.673
+(8) fitness = 1.20375
+(9) fitness = 0.36075
+Generation 2
+(0) fitness = 0.95525
+(1) fitness = 0.7865
+(2) fitness = 1.60825
+(3) fitness = 1.0425
+(4) fitness = 0.815
+(5) fitness = 1.14825
+(6) fitness = 0.86675
+(7) fitness = 1.3595
+(8) fitness = 0.85125
+(9) fitness = 0.60775
+Generation 3
+(0) fitness = 1.22
+(1) fitness = 0.8945
+(2) fitness = 1.2025
+(3) fitness = 0.8715
+(4) fitness = 0.8755
+(5) fitness = 0.73
+(6) fitness = 1.109
+(7) fitness = 1.7345
+(8) fitness = 0.9195
+(9) fitness = 0.7075
+Generation 4
+(0) fitness = 0.96475
+(1) fitness = 0.6195
+(2) fitness = 0.7005
+(3) fitness = 2.051
+(4) fitness = 1.28625
+(5) fitness = 0.6195
+(6) fitness = 0.9845
+(7) fitness = 1.03275
+(8) fitness = 1.23325
+(9) fitness = 1.18975
+Generation 5
+(0) fitness = 0.8895
+(1) fitness = 0.9495
+(2) fitness = 0.989
+(3) fitness = 1.1765
+(4) fitness = 2.001
+(5) fitness = 1.11325
+(6) fitness = 1.628
+(7) fitness = 1.14225
+(8) fitness = 1.2955
+(9) fitness = 1.1685

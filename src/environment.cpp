@@ -183,8 +183,10 @@ void Environment::plotGeneration()
 	}
 }
 
-void Environment::run(int steps)
+void Environment::run(int steps, fstream datafile)
 {
+
+
 	for(auto hive : _hives)
 	{
 		hive->run(steps);
@@ -196,7 +198,8 @@ void Environment::run(int steps)
 	//---------------- Repetition finished -------------------//
 	if(_step>=STEPS_PER_REPETITION)
 	{
-		std::cout << "Repetition " << _repetition << " finished!" << std::endl;
+
+		//data << "Repetition " << _repetition << " finished!" << std::endl;
 		// Reset repetition
 		_step = 0;
 		_repetition++;
@@ -235,7 +238,8 @@ void Environment::run(int steps)
 		//---------------- Generation finished -------------------//
 		if(_repetition>=REPETITIONS_PER_GENERATION)
 		{
-			std::cout << "Generation " << _generation << " finished!" << std::endl;
+			datafile << "Generation " << _generation << std::endl;
+			
 			// Reset generation
 			_generation++;
 			_repetition=0;
@@ -249,13 +253,7 @@ void Environment::run(int steps)
 					mean += _repetitionFitness[j][i];
 				mean/=REPETITIONS_PER_GENERATION;
 				
-				std::cout << "\t (" << i << ") fitness=" << mean << "\tGene:";
-				double* gene = _hives[i]->getGene();
-				for(int j=0; j<4; j++)
-				{
-					std::cout<< " " << gene[j];
-				}
-				std::cout << std::endl;
+				datafile << "(" << i << ") fitness = " << mean << std::endl;				
 
 				// Add fitness to vector
 				_generationFitness.back().push_back(mean);
@@ -327,7 +325,7 @@ void Environment::run(int steps)
 				std::sort(hivesFitness.begin(), hivesFitness.end());	
 				for(int i=0;i<int(_qtyHives/10);i++)
 				{
-					std::cout << "Kill " << hivesFitness[i].second << std::endl;
+					datafile << "Kill " << hivesFitness[i].second  << "\n" << std::endl;
 					float x = ((rand()%2000)/1000.f-1.0)*border;
 					float y = ((rand()%2000)/1000.f-1.0)*border;
 
@@ -341,5 +339,6 @@ void Environment::run(int steps)
 				}
 			}
 		}
+
 	}
 }

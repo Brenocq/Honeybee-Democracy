@@ -8,6 +8,7 @@
 #include "defines.h"
 #include "parameters.h"
 #include "hive.h"
+#include "data.h"
 #include "nestBox.h"
 
 class Environment 
@@ -19,7 +20,7 @@ class Environment
 		void draw();
 		void plotConsensus();
 		void plotGeneration();
-		void run(int steps);
+		void run(int steps, fstream datafile);
 	private:
 		int _qtyHives;
 		int _qtyNestBoxes;

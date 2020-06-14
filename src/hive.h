@@ -3,6 +3,8 @@
 
 #include <stdlib.h>
 #include <iostream>
+#include <string>
+#include <sstream>
 #include <chrono>
 #include <math.h>
 #include "defines.h"
@@ -18,7 +20,7 @@
 class Hive 
 {
 	public:
-		Hive(float x, float y, double* gene, float r, float g, float b);
+		Hive(float x, float y, double* gene, float r, float g, float b, int qtyBees);
 		~Hive();
 
 		void reset(float x, float y, double* gene);
@@ -30,6 +32,7 @@ class Hive
 		float getFitness();
 		double* getGene() const { return _gene; }
 		float getColor(int color);
+		std::string toString();
 
 		void draw();
 		void run(int steps);

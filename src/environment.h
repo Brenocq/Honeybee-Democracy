@@ -14,23 +14,29 @@
 class Environment 
 {
 	public:
-		Environment();
+		Environment(Data* data);
 		~Environment();
 
 		void draw();
 		void plotConsensus();
 		void plotGeneration();
-		void run(int steps, fstream datafile);
+		void run(int steps);
 	private:
-		int _qtyHives;
-		int _qtyNestBoxes;
 		std::vector<Hive*> _hives;
 		std::vector<std::vector<float>> _generationFitness;
 		std::vector<std::vector<float>> _repetitionFitness;
 		NestBox* _nestBoxes;
+		Data* _data;
 
 		int _generation;
 		int _step;
 		int _repetition;
+
+		int _stepsOffline; 
+		int _stepsPerRepetition; 
+		int _repetitionsPerGeneration; 
+		int _qtyBees; 
+		int _qtyHives;
+		int _qtyNestBoxes;
 };
 #endif// ENVIRONMENT_H

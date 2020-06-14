@@ -11,8 +11,8 @@ __global__ void runCuda(ScoutBee* bees, int qtyBees, NestBox* nestBoxes, int qty
     if(idx < qtyBees) { bees[idx].run(curand_uniform(&state[idx]), ratio, hiveX, hiveY, nestBoxes, qtyNestBoxes, choiceProb); }
 }
 
-Hive::Hive(float x, float y, double* gene, float r, float g, float b):
-		_x(x), _y(y), _size(0.01f), _qtyScoutBees(200), _gene(gene), _fitness(0), _r(r), _g(g), _b(b)
+Hive::Hive(float x, float y, double* gene, float r, float g, float b, int qtyBees):
+		_x(x), _y(y), _size(0.01f), _qtyScoutBees(qtyBees), _gene(gene), _fitness(0), _r(r), _g(g), _b(b)
 {
 	_scoutBees = new ScoutBee[_qtyScoutBees];
 
@@ -168,6 +168,18 @@ float Hive::getColor(int color)
 		case 3: c = _b; break;
 	}
 	return c;
+}
+
+std::string Hive::toString()
+{
+	std::stringstream sstr; 
+	sstr << "fitness " << 100*getFitness() << " ";
+	sstr << _gene[0] << " ";
+	sstr << _gene[1] << " ";
+	sstr << _gene[2] << " ";
+	sstr << _gene[3] << " ";
+
+	return sstr.str();
 }
 
 void Hive::draw()

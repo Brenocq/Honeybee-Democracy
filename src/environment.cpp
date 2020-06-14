@@ -1,8 +1,32 @@
 #include "environment.h"
 
-Environment::Environment():
-	_qtyHives(10), _qtyNestBoxes(20), _step(0), _repetition(0), _generation(0)
+Environment::Environment(Data* data):
+	_qtyHives(QTY_HIVES), _qtyNestBoxes(QTY_NEST_BOXES), _step(0), _repetition(0), _generation(0), _data(data),
+	_stepsOffline(STEPS_OFFLINE),
+	_stepsPerRepetition(STEPS_PER_REPETITION),
+	_repetitionsPerGeneration(REPETITIONS_PER_GENERATION),
+	_qtyBees(QTY_BEES)
 {
+	// Check if will load file data
+	std::vector<std::vector<float>> loadedDataGenes;
+	if(_data->getLoadOldData())
+	{
+		_qtyHives = _data->getQtyHives();
+		_qtyNestBoxes = _data->getQtyNestBoxes();
+		_qtyBees = _data->getQtyBees();
+		_generation = _data->getCurrGeneration();
+		_repetition = _data->getCurrRepetition();
+		_repetitionFitness = _data->getRepetitionFitness();
+		_generationFitness = _data->getGenerationFitness();
+		loadedDataGenes = _data->getHivesGenes();
+
+		_stepsOffline = _data->getStepsOffline();
+		_stepsPerRepetition = _data->getStepsPerRepetition();
+		_repetitionsPerGeneration = _data->getRepetitionsPerGeneration();
+	}
+	else
+		data->writeParameters();
+
 	// Avoid spawning on corners
 	float border = 0.9;
 
@@ -26,16 +50,26 @@ Environment::Environment():
 		float y = ((rand()%2000)/1000.f-1.0)*border;
 
 		double* gene = new double[4];
-		gene[0] = rand()%100000000/100000000.f;//0.00005;//
-		gene[1] = rand()%100000000/100000000.f;//0.3;//
-		gene[2] = rand()%100000000/100000000.f;//0.0001;//
-		gene[3] = rand()%100000000/100000000.f;//0;//
+		if(_data->getLoadOldData())
+		{
+			gene[0] = loadedDataGenes[i][0];
+			gene[1] = loadedDataGenes[i][1];
+			gene[2] = loadedDataGenes[i][2];
+			gene[3] = loadedDataGenes[i][3];
+		}
+		else
+		{
+			gene[0] = rand()%100000000/100000000.f;//0.00005;//
+			gene[1] = rand()%100000000/100000000.f;//0.3;//
+			gene[2] = rand()%100000000/100000000.f;//0.0001;//
+			gene[3] = rand()%100000000/100000000.f;//0;//
+		}
 
 		float r = rand()%100/100.f;
 		float g = rand()%100/100.f;
 		float b = rand()%100/100.f;
 		
-		Hive* hive = new Hive(x, y, gene, r, g, b);
+		Hive* hive = new Hive(x, y, gene, r, g, b, _qtyBees);
 		hive->setNestBoxes(_nestBoxes, _qtyNestBoxes);
 		
 		_hives.push_back(hive);
@@ -89,8 +123,8 @@ void Environment::draw()
 	glColor3f(1,0,0);
 	glBegin(GL_POLYGON);
 	{
-		float progress = (float(_step)/STEPS_PER_REPETITION)*(1.f/(REPETITIONS_PER_GENERATION)) 
-			+ (float(_repetition)/REPETITIONS_PER_GENERATION);
+		float progress = (float(_step)/_stepsPerRepetition)*(1.f/(_repetitionsPerGeneration)) 
+			+ (float(_repetition)/_repetitionsPerGeneration);
 		glVertex2d(-1,1);
 		glVertex2d((progress-0.5f)*2,1);
 		glVertex2d((progress-0.5f)*2,1-(3.0f/MAIN_WINDOW_HEIGHT));
@@ -183,12 +217,14 @@ void Environment::plotGeneration()
 	}
 }
 
-void Environment::run(int steps, fstream datafile)
+void Environment::run(int steps)
 {
 
 
 	for(auto hive : _hives)
 	{
+		// Change the default steps if some file was loaded with a diffent stepsOffline
+		steps = steps!=1? _stepsOffline : 1;
 		hive->run(steps);
 	}
 
@@ -196,10 +232,11 @@ void Environment::run(int steps, fstream datafile)
 	//std::cout << _step << "/" << STEPS_PER_GENERATION << std::endl;
 
 	//---------------- Repetition finished -------------------//
-	if(_step>=STEPS_PER_REPETITION)
+	if(_step>=_stepsPerRepetition)
 	{
-
-		//data << "Repetition " << _repetition << " finished!" << std::endl;
+		_data->write("Repetition " + std::to_string(_repetition) + "\n");
+		_data->writeHives(_hives);
+		std::cout << "Repetition " << _repetition << " finished!" << std::endl;
 		// Reset repetition
 		_step = 0;
 		_repetition++;
@@ -236,9 +273,10 @@ void Environment::run(int steps, fstream datafile)
 		}
 
 		//---------------- Generation finished -------------------//
-		if(_repetition>=REPETITIONS_PER_GENERATION)
+		if(_repetition>=_repetitionsPerGeneration)
 		{
-			datafile << "Generation " << _generation << std::endl;
+			_data->write("Generation " + std::to_string(_generation) + "\n");
+			std::cout << "Generation " << _generation << " finished!" << std::endl;
 			
 			// Reset generation
 			_generation++;
@@ -249,11 +287,11 @@ void Environment::run(int steps, fstream datafile)
 			for(int i=0; i<_qtyHives; i++)
 			{
 				float mean = 0;
-				for(int j=0; j<REPETITIONS_PER_GENERATION; j++)
+				for(int j=0; j<_repetitionsPerGeneration; j++)
 					mean += _repetitionFitness[j][i];
-				mean/=REPETITIONS_PER_GENERATION;
+				mean/=_repetitionsPerGeneration;
 				
-				datafile << "(" << i << ") fitness = " << mean << std::endl;				
+				std::cout << "\t(" << i << ") fitness = " << mean << std::endl;				
 
 				// Add fitness to vector
 				_generationFitness.back().push_back(mean);
@@ -325,7 +363,7 @@ void Environment::run(int steps, fstream datafile)
 				std::sort(hivesFitness.begin(), hivesFitness.end());	
 				for(int i=0;i<int(_qtyHives/10);i++)
 				{
-					datafile << "Kill " << hivesFitness[i].second  << "\n" << std::endl;
+					//datafile << "Kill " << hivesFitness[i].second  << "\n" << std::endl;
 					float x = ((rand()%2000)/1000.f-1.0)*border;
 					float y = ((rand()%2000)/1000.f-1.0)*border;
 

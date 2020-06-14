@@ -30,7 +30,7 @@ CUDA_FLAGS = -lcurand
 #${EXECUTABLE}: ${OBJECTS}
 #	@/bin/echo -e "${GREEN}${BOLD}----- Creating executable -----${NC}"
 #	${CC} ${OBJECTS} -o ${EXECUTABLE} ${FLAGS} 
-${EXECUTABLE}: ${OBJECTS}
+${EXECUTABLE}: ${OBJECTS} ${OBJ}parameters.o
 	@/bin/echo -e "${GREEN}${BOLD}----- Creating executable -----${NC}"
 	${CC} -arch=sm_30 ${OBJECTS} -o ${EXECUTABLE} ${FLAGS} ${CUDA_FLAGS}
 
@@ -42,6 +42,10 @@ ${OBJ}%.o: ${SRC}%.cpp
 	@/bin/echo -e "${GREEN}Compiling $<${NC}"
 	${CC} -x cu -arch=sm_30 -dc $< -o $@ ${FLAGS} ${CUDA_FLAGS}
 
+${OBJ}parameters.o: ${LIB}parameters.cpp
+	@/bin/echo -e "${GREEN}Compiling $<${NC}"
+	${CC} -c ${LIB}parameters.cpp
+
 clean:
 	@/bin/echo -e "${GREEN}${BOLD}----- Cleaning project -----${NC}"
 	rm -rf ${OBJ}*.o
@@ -49,4 +53,4 @@ clean:
 
 run: ${EXECUTABLE} ${SOURCES}
 	@/bin/echo -e "${GREEN}${BOLD}----- Running ${EXECUTABLE} -----${NC}"
-	./${EXECUTABLE}
+	./${EXECUTABLE} test1

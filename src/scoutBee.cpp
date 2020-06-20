@@ -53,11 +53,11 @@ void ScoutBee::draw()
 			glColor3f(1.0, 1.0, 0);
 			break;
 			case FIND_NESTBOX:
-			glColor3f(0.0, 0.0, 1.0);
+			glColor3f(0.0, 0.0, _choiceGoodness);
 			break;
 		case BACK_TO_HOME:
 		case DANCE:
-			glColor3f(1.0, 0.0, 1.0);
+			glColor3f(_choiceGoodness, 0.0, _choiceGoodness);
 			break;
 	}
 

@@ -40,6 +40,10 @@ Environment::Environment(Data* data):
 		float y = ((rand()%2000)/1000.f-1.0)*border;
 		float goodness = (rand()%1000)/1000.f;
 
+		// There is always an ideal nest box
+		if(i==0)
+			goodness = 1.0f;
+
 		_nestBoxes[i] = NestBox(x, y, goodness);
 	}
 
@@ -248,6 +252,10 @@ void Environment::run(int steps)
 			float x = ((rand()%2000)/1000.f-1.0)*border;
 			float y = ((rand()%2000)/1000.f-1.0)*border;
 			float goodness = (rand()%1000)/1000.f;
+			
+			// There is always an ideal nest box
+			if(i==0)
+				goodness = 1.0f;
 
 			_nestBoxes[i] = NestBox(x, y, goodness);
 		}

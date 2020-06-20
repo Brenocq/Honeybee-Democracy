@@ -53,4 +53,4 @@ clean:
 
 run: ${EXECUTABLE} ${SOURCES}
 	@/bin/echo -e "${GREEN}${BOLD}----- Running ${EXECUTABLE} -----${NC}"
-	./${EXECUTABLE} test1
+	./${EXECUTABLE} test5

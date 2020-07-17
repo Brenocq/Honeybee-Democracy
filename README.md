@@ -23,3 +23,7 @@ $ sudo apt-get install libglfw3-dev
 if this all, it was installed successfully, the cuda has been installed :D
 
 $ reboot
+
+
+### Videos
+https://drive.google.com/drive/folders/1Q3SClJ-oyWXdZ2awyaY24N3l-iiCsCWj?usp=sharing
